@@ -1,0 +1,1 @@
+from encoding_detection.detect_encoding import detect
