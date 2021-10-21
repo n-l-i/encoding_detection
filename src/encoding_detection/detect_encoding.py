@@ -50,7 +50,8 @@ def _update_encodings():
     for line in response.split("\n"):
         if any(text_string in line for text_string in ("<tr class=","<tr class=")):
             line = line.split("<p>")[1].split("</p>")[0]
-            encodings.append(line)
+            if line != "Codec":
+                encodings.append(line)
     text_file = open(ENCODINGS_FILE,"w")
     for encoding in encodings:
         text_file.write(encoding+"\n")
