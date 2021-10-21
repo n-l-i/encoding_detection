@@ -4,10 +4,10 @@ from os import path
 
 ENCODINGS_FILE = path.join(path.dirname(path.abspath(__file__)),"encodings.txt")
 
-def detect(raw_data):
+def detect(raw_data, confidence_treshhold=0.9):
     guess = guess_encoding(raw_data)
     encoding = guess["encoding"]
-    if guess["confidence"] > 0.8:
+    if guess["confidence"] >= confidence_treshhold:
         return encoding
     try:
         raw_data.decode(encoding)
