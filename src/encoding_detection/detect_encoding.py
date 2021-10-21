@@ -1,7 +1,8 @@
 from urllib.request import urlopen
 from chardet import detect as guess_encoding
+from os import path
 
-ENCODINGS_LIST = "encodings.txt"
+ENCODINGS_FILE = path.join(path.dirname(path.abspath(__file__)),"encodings.txt")
 
 def detect(raw_data):
     guess = guess_encoding(raw_data)
@@ -24,7 +25,7 @@ def detect(raw_data):
 def _all_encodings():
     encodings = []
     try:
-        with open(ENCODINGS_LIST) as codecs:
+        with open(ENCODINGS_FILE) as codecs:
             for codec in codecs:
                 encodings.append(codec.replace("\n",""))
         return encodings
@@ -37,7 +38,6 @@ def _update_encodings():
     response = None
     while python_version > 0:
         url = "https://docs.python.org/"+str(round(python_version,1))+"/library/codecs.html"
-        print(url)
         try:
             response = urlopen(url,timeout=5).read().decode("utf-8")
             break
@@ -51,7 +51,7 @@ def _update_encodings():
         if any(text_string in line for text_string in ("<tr class=","<tr class=")):
             line = line.split("<p>")[1].split("</p>")[0]
             encodings.append(line)
-    text_file = open(ENCODINGS_LIST,"w")
+    text_file = open(ENCODINGS_FILE,"w")
     for encoding in encodings:
         text_file.write(encoding+"\n")
     text_file.close()
