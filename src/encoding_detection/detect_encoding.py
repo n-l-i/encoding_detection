@@ -1,4 +1,5 @@
 from urllib.request import urlopen
+from urllib.error import HTTPError
 from chardet import detect as guess_encoding
 from os import path
 
@@ -12,13 +13,13 @@ def detect(raw_data, confidence_treshhold=0.9):
     try:
         raw_data.decode(encoding)
         return encoding
-    except:
+    except (UnicodeDecodeError,TypeError):
         encoding = None
     for encoding in _all_encodings():
         try:
             raw_data.decode(encoding)
             return encoding
-        except:
+        except UnicodeDecodeError:
             pass
     return "utf-8"
 
@@ -29,7 +30,7 @@ def _all_encodings():
             for codec in codecs:
                 encodings.append(codec.replace("\n",""))
         return encodings
-    except:
+    except FileNotFoundError:
         _update_encodings()
         return _all_encodings()
 
@@ -41,7 +42,7 @@ def _update_encodings():
         try:
             response = urlopen(url,timeout=5).read().decode("utf-8")
             break
-        except:
+        except HTTPError:
             python_version -= 0.1
     if response is None:
         return None
