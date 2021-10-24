@@ -5,23 +5,42 @@ from os import path
 
 ENCODINGS_FILE = path.join(path.dirname(path.abspath(__file__)),"encodings.txt")
 
-def detect(raw_data, confidence_treshhold=0.9):
+def detect(raw_data, confidence_treshhold=-1):
     guess = guess_encoding(raw_data)
-    encoding = guess["encoding"]
-    if guess["confidence"] >= confidence_treshhold:
-        return encoding
+    if guess["encoding"] is None:
+        return _detect_correct_encoding(raw_data)
+    if 0 <= confidence_treshhold <= guess["confidence"]:
+        return guess["encoding"]
     try:
-        raw_data.decode(encoding)
-        return encoding
-    except (UnicodeDecodeError,TypeError):
-        encoding = None
+        raw_data.decode(guess["encoding"])
+        return guess["encoding"]
+    except (UnicodeDecodeError, LookupError):
+        return _detect_correct_encoding(raw_data)
+
+def _detect_correct_encoding(raw_data):
+    encoding_candidates = []
+    decoded_data = {}
     for encoding in _all_encodings():
         try:
-            raw_data.decode(encoding)
-            return encoding
+            data = raw_data.decode(encoding)
+            encoding_candidates.append(encoding)
+            decoded_data[encoding] = data
         except UnicodeDecodeError:
             pass
-    return "utf-8"
+    encoding_ranks = {}
+    for encoding in encoding_candidates:
+        n_same_answers = 0
+        for other_encoding in encoding_candidates:
+            if encoding == other_encoding:
+                continue
+            if decoded_data[encoding] == decoded_data[other_encoding]:
+                n_same_answers += 1
+        encoding_ranks[encoding] = n_same_answers
+    highest_rank = max(encoding_ranks.values())
+    for i in range(len(encoding_candidates)-1,-1,-1):
+        if encoding_ranks[encoding_candidates[i]] != highest_rank:
+            encoding_candidates.pop(i)
+    return encoding_candidates[0]
 
 def _all_encodings():
     encodings = []
